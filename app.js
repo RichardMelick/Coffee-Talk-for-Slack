@@ -7,7 +7,6 @@ const slackApp = new App({
   token: process.env.SLACK_BOT_TOKEN,
   appToken: process.env.SLACK_APP_TOKEN,
   socketMode: true,
-  }
 });
 
 // Helper: Check if user is admin
