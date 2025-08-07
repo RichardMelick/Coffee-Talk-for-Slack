@@ -1,4 +1,4 @@
-const { App } = require("@slack/bolt");
+const { App } = require('@slack/bolt');
 
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
@@ -6,12 +6,13 @@ const app = new App({
   socketMode: true
 });
 
-app.command("/coffeetalk-help", async ({ ack, say }) => {
+// Slash command handler
+app.command('/setup-coffeetalk', async ({ command, ack, say }) => {
   await ack();
-  await say("☕ Welcome to Coffee Talk! Use `/setup-coffeetalk` to start.");
+  await say(`☕ Setting up Coffee Talk channels for your team...`);
 });
 
 (async () => {
   await app.start();
-  console.log("⚡ Coffee Talk Bot is running on Socket Mode");
+  console.log('⚡ Coffee Talk Bot is running on Socket Mode');
 })();
