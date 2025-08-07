@@ -24,7 +24,7 @@ slackApp.command('/ping-coffeetalk', async ({ ack, say }) => {
   await say("☕️ Coffee Talk is brewing and responsive.");
 });
 
-// Enforce: Only allow owner to post top-level messages
+// Enforce: Only allow the channel creator to post top-level messages in #coffeetalk_*
 slackApp.event('message', async ({ event, client, logger }) => {
   try {
     if (event.channel_type !== 'channel' || event.subtype || event.thread_ts) return;
@@ -32,24 +32,48 @@ slackApp.event('message', async ({ event, client, logger }) => {
     const channelInfo = await client.conversations.info({ channel: event.channel });
     const channelName = channelInfo.channel.name;
 
+    // Only apply rules to channels that start with coffeetalk_
     if (!channelName.startsWith('coffeetalk_')) return;
 
-    const allowedUsername = channelName.replace('coffeetalk_', '');
-    const userInfo = await client.users.info({ user: event.user });
-    const actualUsername = userInfo.user.name.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    const creatorId = channelInfo.channel.creator;
+    const userId = event.user;
 
-    if (actualUsername !== allowedUsername) {
+    // If the user is not the channel creator, delete their top-level message
+    if (userId !== creatorId) {
       await client.chat.delete({ channel: event.channel, ts: event.ts });
 
       await client.chat.postMessage({
-        channel: event.user,
-        text: `⚠️ Only @${allowedUsername} can post new messages in #${channelName}. Please reply in threads.`
+        channel: userId,
+        text: `⚠️ Only the owner of #${channelName} can start new threads. Please reply in threads instead.`
       });
 
-      logger.info(`Deleted unauthorized post from ${actualUsername} in #${channelName}`);
+      logger.info(`Deleted unauthorized top-level post from user ${userId} in #${channelName}`);
     }
+
   } catch (error) {
     logger.error(`Message moderation error: ${error.message}`);
+  }
+});
+
+// Event: Welcome new users (via team_join)
+slackApp.event('team_join', async ({ event, client, logger }) => {
+  try {
+    const user = event.user;
+
+    // Skip bots or external accounts
+    if (user.is_bot || user.is_restricted || user.is_ultra_restricted) return;
+
+    // Open a DM
+    const dm = await client.conversations.open({ users: user.id });
+
+    await client.chat.postMessage({
+      channel: dm.channel.id,
+      text: `👋 Welcome to the team, <@${user.id}>!\n\nWould you like your own *Coffee Talk* channel? It’s a public space for your thoughts, ideas, and shower epiphanies. Other members can read and respond, but they are not allowed to create top-level posts.\n\nType \`/coffeetalk-help\` to learn more or ask an admin to create *#coffeetalk_${user.name.toLowerCase().replace(/[^a-z0-9_-]/g, '')}* for you.`
+    });
+
+    logger.info(`Sent welcome message to ${user.name}`);
+  } catch (error) {
+    logger.error(`team_join error: ${error.message}`);
   }
 });
 
