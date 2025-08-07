@@ -7,11 +7,6 @@ const slackApp = new App({
   token: process.env.SLACK_BOT_TOKEN,
   appToken: process.env.SLACK_APP_TOKEN,
   socketMode: true,
-  logger: {
-    debug: (...args) => console.debug(`[${new Date().toISOString()}] [DEBUG]`, ...args),
-    info: (...args) => console.info(`[${new Date().toISOString()}] [INFO]`, ...args),
-    warn: (...args) => console.warn(`[${new Date().toISOString()}] [WARN]`, ...args),
-    error: (...args) => console.error(`[${new Date().toISOString()}] [ERROR]`, ...args)
   }
 });
 
