@@ -9,136 +9,13 @@ const slackApp = new App({
   socketMode: true,
 });
 
-// Helper: Check if user is admin
-async function isAdmin(userId, client) {
-  try {
-    const result = await client.users.info({ user: userId });
-    return result.user.is_admin || result.user.is_owner;
-  } catch (e) {
-    return false;
-  }
-}
-
-// Slash: /setup-coffeetalk
-slackApp.command('/setup-coffeetalk', async ({ command, ack, say, client, logger }) => {
-  await ack();
-
-  const isUserAdmin = await isAdmin(command.user_id, client);
-  if (!isUserAdmin) {
-    return say("🚫 You don’t have permission to run this command.");
-  }
-
-  await say(`☕ Setting up Coffee Talk channels...`);
-
-  const result = await client.users.list();
-  const members = result.members.filter(u => !u.is_bot && !u.deleted && u.id !== 'USLACKBOT');
-
-  for (const user of members) {
-    const username = user.name.toLowerCase().replace(/[^a-z0-9_-]/g, '');
-    const channelName = `coffeetalk_${username}`;
-
-    try {
-      const channel = await client.conversations.create({
-        name: channelName,
-        is_private: true
-      });
-
-      await client.conversations.invite({
-        channel: channel.channel.id,
-        users: user.id
-      });
-
-      logger.info(`✅ Created and invited ${username} to #${channelName}`);
-    } catch (err) {
-      if (err.data?.error === 'name_taken') {
-        logger.warn(`⚠️ Channel #${channelName} already exists. Skipping.`);
-      } else {
-        logger.error(`❌ Failed for ${username}: ${err.message}`);
-      }
-    }
-  }
-
-  await say("✅ Setup complete.");
-});
-
-// Slash: /add-coffeetalk
-slackApp.command('/add-coffeetalk', async ({ command, ack, say, client, logger }) => {
-  await ack();
-
-  const isUserAdmin = await isAdmin(command.user_id, client);
-  if (!isUserAdmin) {
-    return say("🚫 You don’t have permission to run this command.");
-  }
-
-  const match = command.text.match(/<@(\w+)>/);
-  if (!match) return say("❗ Please mention a user: `/add-coffeetalk @username`");
-
-  const userId = match[1];
-  const userInfo = await client.users.info({ user: userId });
-  const username = userInfo.user.name.toLowerCase().replace(/[^a-z0-9_-]/g, '');
-  const channelName = `coffeetalk_${username}`;
-
-  try {
-    const channel = await client.conversations.create({
-      name: channelName,
-      is_private: true
-    });
-
-    await client.conversations.invite({
-      channel: channel.channel.id,
-      users: userId
-    });
-
-    await say(`✅ Created #${channelName} for <@${userId}>`);
-  } catch (err) {
-    if (err.data?.error === 'name_taken') {
-      await say(`⚠️ Channel for <@${userId}> already exists.`);
-    } else {
-      logger.error(`Error in /add-coffeetalk: ${err.message}`);
-      await say("❌ Something went wrong.");
-    }
-  }
-});
-
-// Slash: /create-coffeetalk
-slackApp.command('/create-coffeetalk', async ({ command, ack, say, client, logger }) => {
-  await ack();
-
-  const userId = command.user_id;
-  const userInfo = await client.users.info({ user: userId });
-  const username = userInfo.user.name.toLowerCase().replace(/[^a-z0-9_-]/g, '');
-  const channelName = `coffeetalk_${username}`;
-
-  try {
-    const result = await client.conversations.create({
-      name: channelName,
-      is_private: true
-    });
-
-    await client.conversations.invite({
-      channel: result.channel.id,
-      users: userId
-    });
-
-    await say(`✅ Your personal Coffee Talk channel #${channelName} has been created.`);
-  } catch (error) {
-    if (error.data?.error === 'name_taken') {
-      await say(`⚠️ Your channel #${channelName} already exists.`);
-    } else {
-      logger.error(`Error in /create-coffeetalk: ${error.message}`);
-      await say("❌ Something went wrong.");
-    }
-  }
-});
-
 // Slash: /coffeetalk-help
 slackApp.command('/coffeetalk-help', async ({ ack, say }) => {
   await ack();
   await say(`☕ *Coffee Talk Help*\n
-• \`/setup-coffeetalk\` – Admin only: Set up channels for all team members\n
-• \`/add-coffeetalk @user\` – Admin only: Create a channel for someone\n
-• \`/create-coffeetalk\` – Create your own channel\n
-• \`/coffeetalk-help\` – Show this help message`);
+• \`/coffeetalk-help\` – Show this help message\n
+• \`/ping-coffeetalk\` – Check if Coffee Talk is alive\n
+\nℹ️ Admins must manually create and manage \`coffeetalk_*\` channels.`);
 });
 
 // Slash: /ping-coffeetalk
