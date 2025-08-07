@@ -9,9 +9,13 @@ const slackApp = new App({
 });
 
 // Slash command
-slackApp.command('/setup-coffeetalk', async ({ command, ack, say }) => {
-  await ack();
-  await say(`☕ Setting up Coffee Talk channels...`);
+slackApp.command('/setup-coffeetalk', async ({ command, ack, say, logger }) => {
+  try {
+    await ack();
+    await say(`☕ Setting up Coffee Talk channels...`);
+  } catch (error) {
+    logger.error("Command error:", error);
+  }
 });
 
 // Start both the Slack bot and a fake web server
