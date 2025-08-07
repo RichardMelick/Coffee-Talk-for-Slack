@@ -67,7 +67,7 @@ slackApp.event('team_join', async ({ event, client, logger }) => {
 
     await client.chat.postMessage({
       channel: dm.channel.id,
-      text: `👋 Welcome to the team, <@${user.id}>!\n\nWould you like your own *Coffee Talk* channel? It’s a public space for your thoughts, ideas, and shower epiphanies. Other members can read and respond, but they are not allowed to create top-level posts.\n\nType \`/coffeetalk-help\` to learn more or ask an admin to create *#coffeetalk_${user.name.toLowerCase().replace(/[^a-z0-9_-]/g, '')}* for you.`
+      text: `👋 Welcome to the team, <@${user.id}>!\n\nWould you like your own *Coffee Talk* channel? It’s a public space for your thoughts, ideas, and shower epiphanies. Other members can read and respond, but they are not allowed to create top-level posts.\n\nType \`/coffeetalk-help\` to learn more or create your *#coffeetalk_${user.name.toLowerCase().replace(/[^a-z0-9_-]/g, '')}*. Dont forget to invite Coffee Bot to the channel too.`
     });
 
     logger.info(`Sent welcome message to ${user.name}`);
