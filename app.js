@@ -12,10 +12,28 @@ const slackApp = new App({
 // Slash: /coffeetalk-help
 slackApp.command('/coffeetalk-help', async ({ ack, say }) => {
   await ack();
-  await say(`☕ *Coffee Talk Help*\n
-• \`/coffeetalk-help\` – Show this help message\n
-• \`/ping-coffeetalk\` – Check if Coffee Talk is alive\n
-\nℹ️ Admins must manually create and manage \`coffeetalk_*\` channels.`);
+  await say(`☕ *Welcome to Coffee Talk!*\n
+*Coffee Talk* creates cozy, personal public channels for thinking out loud, journaling, or rubber duck debugging. Each \`#coffeetalk_*\` channel is owned by one person—only they can start new conversations. Everyone else is encouraged to reply in threads.
+
+These channels are perfect for:
+• Brain dumps, personal notes, or daily reflections  
+• Sharing “working out loud” updates  
+• Logging ideas, wins, frustrations, and questions  
+• Letting teammates peek into your thought process (and maybe offer help)
+
+📌 *Rules for Coffee Talk channels:*
+• Only the owner can post *top-level* messages (new conversations).  
+• Everyone else should *reply in threads*—just like tapping someone on the shoulder to talk about their sticky note.  
+• Channels must be named like \`#coffeetalk_yourname\`.
+
+✅ *You don’t need an admin to set it up!*  
+Feel free to create your own \`#coffeetalk_*\` channel—Coffee Talk will enforce the rules automatically once the bot is added.
+
+📋 *Available Commands:*
+• \`/coffeetalk-help\` – Show this message  
+• \`/ping-coffeetalk\` – Check if the bot is running
+
+Happy thinking ☕`);
 });
 
 // Slash: /ping-coffeetalk
