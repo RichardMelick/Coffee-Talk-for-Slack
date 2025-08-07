@@ -9,11 +9,6 @@ const slackApp = new App({
   socketMode: true,
 });
 
-slackApp.receiver.client.socketModeClient.on('disconnect', () => {
-  console.error('⚠️ Slack Socket Mode was disconnected by the server.');
-});
-
-
 // Slash: /coffeetalk-help
 slackApp.command('/coffeetalk-help', async ({ ack, say }) => {
   await ack();
