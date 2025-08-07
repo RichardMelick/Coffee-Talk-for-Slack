@@ -144,7 +144,7 @@ slackApp.command('/coffeetalk-help', async ({ ack, say }) => {
 // Slash: /ping-coffeetalk
 slackApp.command('/ping-coffeetalk', async ({ ack, say }) => {
   await ack();
-  await say("🏓 Coffee Talk is brewing and responsive.");
+  await say("☕️ Coffee Talk is brewing and responsive.");
 });
 
 // Enforce: Only allow owner to post top-level messages
