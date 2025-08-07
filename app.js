@@ -26,6 +26,17 @@ slackApp.command('/setup-coffeetalk', async ({ command, ack, say, logger }) => {
   }
 });
 
+slackApp.command('/coffeetalk-help', async ({ ack, say, logger }) => {
+  try {
+    await ack();
+    await say(
+      `☕ *Coffee Talk Help*\n\nUse the following commands:\n• \`/setup-coffeetalk\` — Create personal channels for all teammates\n• \`/add-coffeetalk @user\` — Add a new member's channel\n• \`/coffeetalk-help\` — Show this message`
+    );
+  } catch (error) {
+    logger.error(`Error handling /coffeetalk-help: ${error.message}`);
+  }
+});
+
 // Start both the Slack bot and a dummy HTTP server for Render
 (async () => {
   await slackApp.start();
