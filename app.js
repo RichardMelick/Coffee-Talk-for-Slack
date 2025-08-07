@@ -38,22 +38,21 @@ slackApp.event('message', async ({ event, client, logger }) => {
     const creatorId = channelInfo.channel.creator;
     const userId = event.user;
 
-    // If the user is not the channel creator, delete their top-level message
+    // If the user is not the channel creator, send them a warning (but don't delete)
     if (userId !== creatorId) {
-      await client.chat.delete({ channel: event.channel, ts: event.ts });
-
       await client.chat.postMessage({
         channel: userId,
         text: `⚠️ Only the owner of #${channelName} can start new threads. Please reply in threads instead.`
       });
 
-      logger.info(`Deleted unauthorized top-level post from user ${userId} in #${channelName}`);
+      logger.info(`Warned user ${userId} for posting in #${channelName}`);
     }
 
   } catch (error) {
     logger.error(`Message moderation error: ${error.message}`);
   }
 });
+
 
 // Event: Welcome new users (via team_join)
 slackApp.event('team_join', async ({ event, client, logger }) => {
