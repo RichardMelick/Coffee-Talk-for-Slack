@@ -85,7 +85,7 @@ slackApp.event('team_join', async ({ event, client, logger }) => {
 
     await client.chat.postMessage({
       channel: dm.channel.id,
-      text: `👋 Welcome to the team, <@${user.id}>!\n\nWould you like your own *Coffee Talk* channel? It’s a public space for your thoughts, ideas, and shower epiphanies. Other members can read and respond, but they are not allowed to create top-level posts.\n\nType \`/coffeetalk-help\` to learn more or create your *#coffeetalk_${user.name.toLowerCase().replace(/[^a-z0-9_-]/g, '')}*. Dont forget to invite Coffee Bot to the channel too.`
+      text: `👋 Welcome to the team, <@${user.id}>!\n\nWould you like your own *Coffee Talk* channel? It’s a public space for your thoughts, ideas, and shower epiphanies. Other members can read and respond, but they are not allowed to create top-level posts.\n\nType \`/coffeetalk-help\` to learn more or create your *#coffeetalk_${user.name.toLowerCase().replace(/[^a-z0-9_-]/g, '')}*. Just run \'/coffeetalk-create' to set one up—Coffee Talk Bot will join automatically.`
     });
 
     logger.info(`Sent welcome message to ${user.name}`);
@@ -93,6 +93,65 @@ slackApp.event('team_join', async ({ event, client, logger }) => {
     logger.error(`team_join error: ${error.message}`);
   }
 });
+
+// Generate: Create users coffeetalk channel
+slackApp.command('/coffeetalk-create', async ({ ack, body, client, respond, logger }) => {
+  await ack();
+
+  try {
+    // Fetch user's info to get display name
+    const userInfo = await client.users.info({ user: body.user_id });
+    const displayName = userInfo.user.profile.display_name || userInfo.user.name;
+
+    // Sanitize and generate channel name
+    const cleanName = displayName.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    const channelName = `coffeetalk_${cleanName}`;
+
+    // Try to create the channel
+    const createResult = await client.conversations.create({
+      name: channelName,
+      is_private: false
+    });
+
+    // Invite the user who requested it
+    await client.conversations.invite({
+      channel: createResult.channel.id,
+      users: body.user_id
+    });
+
+    // 2. Join the bot to the channel
+await client.conversations.join({
+  channel: createResult.channel.id
+});
+
+    await client.chat.postMessage({
+  channel: createResult.channel.id,
+  text: `👋 Welcome to your *Coffee Talk* channel, <@${body.user_id}>!\n\nThis is your personal public space—like a digital journal or rubber duck debugging station. You can start top-level conversations here anytime. Others can read and reply *in threads*, but only you can start new discussions.\n\n☕ *Why Coffee Talk?*\nThink of this as your async thought space: drop in ideas, notes, questions, or even your daily "thinking out loud." Others can chime in when it makes sense for them.\n\n🔒 *Reminder:*\nCoffee Talk channels are *thread-only* for everyone but the channel creator. This helps keep your space focused, organized, and yours.\n\nType \`/coffeetalk-help\` at any time for guidance or tips.\n\nHappy thinking ☁️`
+});
+
+    await respond({
+      response_type: 'ephemeral',
+      text: `☕ Your Coffee Talk channel <#${createResult.channel.id}> has been created!`
+    });
+
+    logger.info(`Created Coffee Talk channel: #${channelName}`);
+
+  } catch (error) {
+    if (error.data?.error === 'name_taken') {
+      await respond({
+        response_type: 'ephemeral',
+        text: `⚠️ A channel named *#coffeetalk_${cleanName}* already exists.`
+      });
+    } else {
+      logger.error(`Error creating channel: ${error.message}`);
+      await respond({
+        response_type: 'ephemeral',
+        text: `❌ Something went wrong trying to create your Coffee Talk channel.`
+      });
+    }
+  }
+});
+
 
 // Dummy Express server for Render Web Service
 (async () => {
