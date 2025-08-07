@@ -1,6 +1,6 @@
 # ☕ Coffee Talk
 
-**Coffee Talk** is a friendly Slack bot that helps teams share thoughts, half-baked ideas, and rubber duck debugging in personal, thread-only channels. It creates a cozy, async space for thinking out loud—without adding noise to public conversations.
+**Coffee Talk** is a friendly Slack bot that helps teams share thoughts, half-baked ideas, and rubber duck debugging in personal, thread-only channels. It creates a cozy, async space for thinking out loud all without adding noise to public conversations.
 
 ---
 
