@@ -42,9 +42,9 @@ slackApp.event('message', async ({ event, client, logger }) => {
     if (userId !== creatorId) {
       await client.chat.postMessage({
         channel: userId,
-        text: `⚠️ Only the owner of #${channelName} can start new threads. Please reply in threads instead.`
+        text: `👋 Hi there, ${displayName}. A little reminder that Coffee Talk channels are for you to *reply* in—not start new conversations. Please use *thread replies* instead.`
       });
-
+      
       logger.info(`Warned user ${userId} for posting in #${channelName}`);
     }
 
