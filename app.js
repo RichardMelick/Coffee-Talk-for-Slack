@@ -4,10 +4,12 @@ const { App } = require('@slack/bolt');
 const express = require('express');
 
 const slackApp = new App({
-  token: process.env.SLACK_BOT_TOKEN,
   appToken: process.env.SLACK_APP_TOKEN,
-  socketMode: true,
+  const app = new App({
+  token: process.env.SLACK_BOT_TOKEN,
+  signingSecret: process.env.SLACK_SIGNING_SECRET,
 });
+
 
 // Slash: /coffeetalk-help
 slackApp.command('/coffeetalk-help', async ({ ack, say }) => {
