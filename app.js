@@ -12,8 +12,7 @@ const slackApp = new App({
 // Slash: /coffeetalk-help
 slackApp.command('/coffeetalk-help', async ({ ack, say }) => {
   await ack();
-  await say(`☕ *Welcome to Coffee Talk!*
-x
+  await say(`☕ *Welcome to Coffee Talk!*\n
 *Coffee Talk* creates cozy, personal public channels for thinking out loud, journaling, or rubber duck debugging. Each \`#coffeetalk_*\` channel is owned by one person—only they can start new conversations. Everyone else is encouraged to reply in threads.
 
 These channels are perfect for:
@@ -32,10 +31,10 @@ Feel free to create your own \`#coffeetalk_*\` channel—Coffee Talk will enforc
 
 📋 *Available Commands:*
 • \`/coffeetalk-help\` – Show this message  
-• \`/ping-coffeetalk\` – Check if the bot is running  
-• \`/coffeetalk-start\` – Invite the bot to your existing Coffee Talk channel
+• \`/ping-coffeetalk\` – Check if the bot is running
+• \`/coffeetalk-start\` – Invite Coffee Talk to your channel to get the conversations brewing.
 
-Happy thinking ☕`);
+Enjoy the brew.`);
 });
 
 // Slash: /ping-coffeetalk
@@ -44,6 +43,65 @@ slackApp.command('/ping-coffeetalk', async ({ ack, say }) => {
   await say("☕️ Coffee Talk is brewing and responsive.");
 });
 
+// Enforce: Only allow the channel creator to post top-level messages in #coffeetalk_*
+slackApp.event('message', async ({ event, client, logger }) => {
+  try {
+    if (event.channel_type !== 'channel' || event.subtype || event.thread_ts) return;
+
+    const channelInfo = await client.conversations.info({ channel: event.channel });
+    const channelName = channelInfo.channel.name;
+
+    // Only apply rules to channels that start with coffeetalk_
+    if (!channelName.startsWith('coffeetalk_')) return;
+
+    const creatorId = channelInfo.channel.creator;
+    const userId = event.user;
+
+    // If the user is not the channel creator, send them a warning (but don't delete)
+    if (userId !== creatorId) {
+      await client.chat.postMessage({
+        channel: userId,
+        text: `👋 Hi there. A little reminder that Coffee Talk channels are for you to *reply* in—not start new conversations. Please use *thread replies* instead.`
+      });
+      
+      logger.info(`Warned user ${userId} for posting in #${channelName}`);
+    }
+
+  } catch (error) {
+    logger.error(`Message moderation error: ${error.message}`);
+  }
+});
+
+
+// Event: Welcome new users (via team_join)
+slackApp.event('team_join', async ({ event, client, logger }) => {
+  try {
+    const user = event.user;
+
+    // Skip bots or external accounts
+    if (user.is_bot || user.is_restricted || user.is_ultra_restricted) return;
+
+    // Open a DM
+    const dm = await client.conversations.open({ users: user.id });
+await client.chat.postMessage({
+  channel: dm.channel.id,
+  text: `👋 Welcome to the team, <@${user.id}>!
+
+Would you like your own *Coffee Talk* channel? It’s a public space for your thoughts, ideas, and shower epiphanies. Other members can read and reply—but only you can start top-level posts.
+
+To get started:
+1. Create a public channel named \`#coffeetalk_${user.name.toLowerCase().replace(/[^a-z0-9_-]/g, '')}\`
+2. Run \`/coffeetalk-start\` in that channel to invite Coffee Talk Bot
+
+Type \`/coffeetalk-help\` at any time to learn more. ☕`
+});
+
+
+    logger.info(`Sent welcome message to ${user.name}`);
+  } catch (error) {
+    logger.error(`team_join error: ${error.message}`);
+  }
+});
 // Slash: /coffeetalk-start
 slackApp.command('/coffeetalk-start', async ({ ack, body, client, respond, logger }) => {
   await ack();
@@ -57,10 +115,10 @@ slackApp.command('/coffeetalk-start', async ({ ack, body, client, respond, logge
     const result = await client.conversations.list({ types: 'public_channel' });
     const channel = result.channels.find(c => c.name === expectedChannelName);
 
-    if (!channel) {
+    if (!channel || channel.id !== body.channel_id) {
       await respond({
         response_type: 'ephemeral',
-        text: `⚠️ Please create the *#${expectedChannelName}* channel first, then run this command again.`
+        text: `⚠️ Please run \`/coffeetalk-start\` inside your own \`#${expectedChannelName}\` channel.`
       });
       return;
     }
@@ -71,7 +129,7 @@ slackApp.command('/coffeetalk-start', async ({ ack, body, client, respond, logge
       channel: channel.id,
       text: `👋 Welcome to your very own *Coffee Talk*, <@${body.user_id}>!
 
-This is a place to share ideas, learnings, and even photos from your latest adventure. Other team members are welcome to come and go to engage in your posts—but only you can start new top-level conversations. Everyone else should reply in threads.
+This is your space to share ideas, learnings, and even photos from your latest adventure. You’re the only one who can start top-level posts—everyone else will reply in threads.
 
 Have any other questions? Type \`/coffeetalk-help\` anytime for guidance.
 
@@ -90,57 +148,6 @@ Have any other questions? Type \`/coffeetalk-help\` anytime for guidance.
       response_type: 'ephemeral',
       text: `❌ Something went wrong trying to start Coffee Talk in your channel.`
     });
-  }
-});
-
-// Enforce: Only allow the channel creator to post top-level messages in #coffeetalk_*
-slackApp.event('message', async ({ event, client, logger }) => {
-  try {
-    if (event.channel_type !== 'channel' || event.subtype || event.thread_ts) return;
-
-    const channelInfo = await client.conversations.info({ channel: event.channel });
-    const channelName = channelInfo.channel.name;
-
-    if (!channelName.startsWith('coffeetalk_')) return;
-
-    const creatorId = channelInfo.channel.creator;
-    const userId = event.user;
-
-    if (userId !== creatorId) {
-      await client.chat.postMessage({
-        channel: userId,
-        text: `👋 Hi there. A little reminder that Coffee Talk channels are for you to *reply* in—not start new conversations. Please use *thread replies* instead.`
-      });
-
-      logger.info(`Warned user ${userId} for posting in #${channelName}`);
-    }
-  } catch (error) {
-    logger.error(`Message moderation error: ${error.message}`);
-  }
-});
-
-// Event: Welcome new users (via team_join)
-slackApp.event('team_join', async ({ event, client, logger }) => {
-  try {
-    const user = event.user;
-    if (user.is_bot || user.is_restricted || user.is_ultra_restricted) return;
-
-    const dm = await client.conversations.open({ users: user.id });
-
-    await client.chat.postMessage({
-      channel: dm.channel.id,
-      text: `👋 Welcome to the team, <@${user.id}>!
-
-Would you like your own *Coffee Talk* channel? It’s a public space for your thoughts, ideas, and shower epiphanies. Other members can read and reply, but only you can start new conversations.
-
-To get started, create a public channel named \`#coffeetalk_${user.name.toLowerCase().replace(/[^a-z0-9_-]/g, '')}\` and run \`/coffeetalk-start\`. The Coffee Talk Bot will join automatically and enforce the reply-only rule for others.
-
-Type \`/coffeetalk-help\` anytime to learn more. ☕`
-    });
-
-    logger.info(`Sent welcome message to ${user.name}`);
-  } catch (error) {
-    logger.error(`team_join error: ${error.message}`);
   }
 });
 
