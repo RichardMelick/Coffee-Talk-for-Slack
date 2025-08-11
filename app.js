@@ -24,10 +24,10 @@ These channels are perfect for:
 📌 *Rules for Coffee Talk channels:*
 • Only the owner can post *top-level* messages (new conversations).  
 • Everyone else should *reply in threads*—just like tapping someone on the shoulder to talk about their sticky note.  
-• Channels must be named like \`#coffeetalk_yourname\`.
+• Channels must be named like \`#ramlbling-yourname\`.
 
 ✅ *You don’t need an admin to set it up!*  
-Feel free to create your own \`#coffeetalk_*\` channel—Coffee Talk will enforce the rules automatically once the bot is added.
+Feel free to create your own \`#rambling-*\` channel—Coffee Talk will enforce the rules automatically once the bot is added.
 
 📋 *Available Commands:*
 • \`/coffeetalk-help\` – Show this message  
@@ -52,7 +52,7 @@ slackApp.event('message', async ({ event, client, logger }) => {
     const channelName = channelInfo.channel.name;
 
     // Only apply rules to channels that start with coffeetalk_
-    if (!channelName.startsWith('coffeetalk_')) return;
+    if (!channelName.startsWith('rambling-')) return;
 
     const creatorId = channelInfo.channel.creator;
     const userId = event.user;
@@ -90,7 +90,7 @@ await client.chat.postMessage({
 Would you like your own *Coffee Talk* channel? It’s a public space for your thoughts, ideas, and shower epiphanies. Other members can read and reply—but only you can start top-level posts.
 
 To get started:
-1. Create a public channel named \`#coffeetalk_${user.name.toLowerCase().replace(/[^a-z0-9_-]/g, '')}\`
+1. Create a public channel named \`#rambling-${user.name.toLowerCase().replace(/[^a-z0-9_-]/g, '')}\`
 2. Run \`/coffeetalk-start\` in that channel to invite Coffee Talk Bot
 
 Type \`/coffeetalk-help\` at any time to learn more. ☕`
@@ -110,7 +110,7 @@ slackApp.command('/coffeetalk-start', async ({ ack, body, client, respond, logge
     const userInfo = await client.users.info({ user: body.user_id });
     const displayName = userInfo.user.profile.display_name || userInfo.user.name;
     const cleanName = displayName.toLowerCase().replace(/[^a-z0-9_-]/g, '');
-    const expectedChannelName = `coffeetalk_${cleanName}`;
+    const expectedChannelName = `rambling-${cleanName}`;
 
     const result = await client.conversations.list({ types: 'public_channel' });
     const channel = result.channels.find(c => c.name === expectedChannelName);
