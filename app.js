@@ -109,19 +109,19 @@ slackApp.command('/coffeetalk-start', async ({ ack, body, client, respond, logge
   try {
     const userInfo = await client.users.info({ user: body.user_id });
     const displayName = userInfo.user.profile.display_name || userInfo.user.name;
-    const cleanName = displayName.toLowerCase().replace(/[^a-z0-9_-]/g, '');
-    const expectedChannelName = `rambling-${cleanName}`;
+const channelInfo = await client.conversations.info({ channel: body.channel_id });
+const channelName = channelInfo.channel.name;
 
-    const result = await client.conversations.list({ types: 'public_channel' });
-    const channel = result.channels.find(c => c.name === expectedChannelName);
+// Check it starts with rambling-
+if (!channelName.startsWith('rambling-')) {
+  await respond({
+    response_type: 'ephemeral',
+    text: `⚠️ Please run this command from a channel whose name starts with *#rambling-*`
+  });
+  return;
+}
 
-    if (!channel || channel.id !== body.channel_id) {
-      await respond({
-        response_type: 'ephemeral',
-        text: `⚠️ Please run \`/coffeetalk-start\` inside your own \`#${expectedChannelName}\` channel.`
-      });
-      return;
-    }
+const channel = channelInfo.channel;
 
     await client.conversations.join({ channel: channel.id });
 
